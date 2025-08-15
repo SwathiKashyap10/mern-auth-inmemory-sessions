@@ -44,34 +44,43 @@ async function handelUserSignup(req, res) {
 }
 
 
-async function handelUserLogin(req,res){
-    const {email,password} = req.body;
-    const user = await User.findOne({email});
-    if(!user){
-        return res.status(401).json({success:false,message:"Wrong Credentials"});
+async function handelUserLogin(req, res) {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Wrong Credentials" });
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: "Wrong Credentials" });
     }
+
     // creating session id for the user 
     const sessionId = uuidv4();
-    //mapping the sessionId with the user and storing it
-    setUser(sessionId,user);
+    // mapping the sessionId with the user and storing it
+    setUser(sessionId, user);
 
     res.cookie("uid", sessionId, {
-    httpOnly: true, // safer from XSS attacks
-    secure: false,  // set to true in production (to use HTTPS)
-    sameSite: "lax" // set "none" in production
-    // If frontend & backend are on same domain → sameSite: "strict" or "lax".
-    // If on different domains → sameSite: "none", secure: true.
-  });
+      httpOnly: true, // safer from XSS attacks
+      secure: false,  // set to true in production (to use HTTPS)
+      sameSite: "lax" // set "none" in production
+      // If frontend & backend are on same domain → sameSite: "strict" or "lax".
+      // If on different domains → sameSite: "none", secure: true.
+    });
 
     return res.status(200).json({
-    success: true,
-    message: "Login successful"
+      success: true,
+      message: "Login successful"
     });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ success: false, message: "Server error during login" });
+  }
 }
+
 
 
 module.exports = {handelUserSignup,handelUserLogin};
